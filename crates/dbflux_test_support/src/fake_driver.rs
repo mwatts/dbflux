@@ -305,6 +305,23 @@ impl DbDriver for FakeDriver {
                 endpoint: get_optional_string(values, "endpoint"),
                 path_style: false,
             },
+            DbKind::Turso => {
+                let path = values
+                    .get("path")
+                    .map(|path| path.trim())
+                    .filter(|path| !path.is_empty())
+                    .unwrap_or(":memory:");
+
+                DbConfig::Turso {
+                    mode: get_string(values, "mode", "local"),
+                    path: path.into(),
+                    url: get_optional_string(values, "url"),
+                    connection_id: None,
+                    experimental_custom_types: false,
+                    experimental_materialized_views: false,
+                    experimental_encryption: false,
+                }
+            }
         };
 
         Ok(config)
@@ -328,6 +345,13 @@ impl DbDriver for FakeDriver {
             }
             DbConfig::SQLite { path, .. } => {
                 values.insert("path".to_string(), path.display().to_string());
+            }
+            DbConfig::Turso {
+                mode, path, url, ..
+            } => {
+                values.insert("mode".to_string(), mode.clone());
+                values.insert("path".to_string(), path.display().to_string());
+                values.insert("url".to_string(), url.clone().unwrap_or_default());
             }
             DbConfig::MySQL {
                 host,
@@ -596,9 +620,11 @@ impl Connection for FakeConnection {
             DbKind::SQLite | DbKind::MongoDB | DbKind::Redis => {
                 SchemaLoadingStrategy::SingleDatabase
             }
-            DbKind::DynamoDB | DbKind::CloudWatchLogs | DbKind::InfluxDB | DbKind::S3 => {
-                SchemaLoadingStrategy::SingleDatabase
-            }
+            DbKind::DynamoDB
+            | DbKind::CloudWatchLogs
+            | DbKind::InfluxDB
+            | DbKind::S3
+            | DbKind::Turso => SchemaLoadingStrategy::SingleDatabase,
         }
     }
 
@@ -642,6 +668,7 @@ fn active_database_from_profile(profile: &ConnectionProfile) -> Option<String> {
         DbConfig::SqlServer { database, .. } => database.clone(),
         DbConfig::Redshift { database, .. } => Some(database.clone()),
         DbConfig::S3 { .. } => None,
+        DbConfig::Turso { path, .. } => Some(path.display().to_string()),
         DbConfig::External { values, .. } => values.get("database").cloned(),
     }
 }
@@ -664,6 +691,7 @@ fn metadata_for_kind(kind: DbKind) -> &'static DriverMetadata {
         // metadata instead of a hand-rolled fake.
         DbKind::Redshift => &REDSHIFT_METADATA,
         DbKind::S3 => &FAKE_S3_METADATA,
+        DbKind::Turso => &FAKE_TURSO_METADATA,
     }
 }
 
@@ -680,6 +708,7 @@ fn form_for_kind(kind: DbKind) -> &'static DriverFormDef {
         DbKind::SqlServer => &SQLSERVER_FORM,
         DbKind::Redshift => &REDSHIFT_FORM,
         DbKind::S3 => &S3_FORM,
+        DbKind::Turso => &SQLITE_FORM,
     }
 }
 
@@ -1110,6 +1139,57 @@ static FAKE_S3_METADATA: LazyLock<DriverMetadata> = LazyLock::new(|| DriverMetad
     editor_profile: None,
 });
 
+static FAKE_TURSO_METADATA: LazyLock<DriverMetadata> = LazyLock::new(|| DriverMetadata {
+    id: "fake-turso".into(),
+    display_name: "Fake Turso".into(),
+    description: "Deterministic fake driver for tests".into(),
+    category: DatabaseCategory::Relational,
+    transfer_family: TransferFamily::Sql,
+    deployment_class: None,
+    query_language: QueryLanguage::Sql,
+    capabilities: DriverCapabilities::RELATIONAL_BASE,
+    default_port: None,
+    uri_scheme: "turso".into(),
+    icon: Icon::Database,
+    syntax: Some(SyntaxInfo {
+        identifier_quote: '"',
+        string_quote: '\'',
+        placeholder_style: dbflux_core::PlaceholderStyle::QuestionMark,
+        supports_schemas: false,
+        default_schema: None,
+        case_sensitive_identifiers: true,
+    }),
+    query: Some(QueryCapabilities::default()),
+    mutation: Some(MutationCapabilities {
+        supports_upsert: true,
+        supports_returning: true,
+        ..Default::default()
+    }),
+    ddl: Some(DdlCapabilities {
+        supports_alter_table: false,
+        supports_add_column: true,
+        supports_rename_column: true,
+        supports_drop_column: false,
+        supports_alter_column: false,
+        supports_add_constraint: false,
+        supports_drop_constraint: false,
+        transactional_ddl: false,
+        ..Default::default()
+    }),
+    transactions: Some(TransactionCapabilities {
+        supported_isolation_levels: vec![dbflux_core::IsolationLevel::ReadCommitted],
+        default_isolation_level: Some(dbflux_core::IsolationLevel::ReadCommitted),
+        ..Default::default()
+    }),
+    limits: Some(DriverLimits::default()),
+    ssl_modes: None,
+    ssl_cert_fields: None,
+    classification_override: None,
+    default_chunk_size: None,
+    supports_lock_timeout: false,
+    editor_profile: None,
+});
+
 /// Minimal placeholder form for tests — the real `S3_FORM` (with the full
 /// static-credentials/endpoint/path-style field set) is defined in
 /// `dbflux_driver_s3` once the driver itself is implemented.
@@ -1393,6 +1473,7 @@ mod tests {
                 DbKind::SqlServer => DbConfig::default_sqlserver(),
                 DbKind::Redshift => DbConfig::default_redshift(),
                 DbKind::S3 => DbConfig::default_s3(),
+                DbKind::Turso => DbConfig::default_turso(),
             };
 
             let profile = ConnectionProfile::new("fake", config);

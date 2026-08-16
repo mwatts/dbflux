@@ -467,6 +467,7 @@ fn db_kind_to_str(kind: DbKind) -> String {
         DbKind::SqlServer => "SqlServer",
         DbKind::Redshift => "Redshift",
         DbKind::S3 => "S3",
+        DbKind::Turso => "Turso",
     }
     .to_string()
 }
@@ -485,6 +486,7 @@ fn str_to_db_kind(s: &str) -> Option<DbKind> {
         "SqlServer" => Some(DbKind::SqlServer),
         "Redshift" => Some(DbKind::Redshift),
         "S3" => Some(DbKind::S3),
+        "Turso" => Some(DbKind::Turso),
         _ => None,
     }
 }
@@ -502,6 +504,7 @@ fn default_db_config_for_kind(kind: DbKind) -> dbflux_core::DbConfig {
         DbKind::SqlServer => dbflux_core::DbConfig::default_sqlserver(),
         DbKind::Redshift => dbflux_core::DbConfig::default_redshift(),
         DbKind::S3 => dbflux_core::DbConfig::default_s3(),
+        DbKind::Turso => dbflux_core::DbConfig::default_turso(),
     }
 }
 

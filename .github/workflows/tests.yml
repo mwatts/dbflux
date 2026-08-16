@@ -51,7 +51,7 @@ jobs:
           cache-on-failure: true
 
       - name: Run deterministic workspace tests
-        run: cargo test --workspace --locked --features "sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,aws"
+        run: cargo test --workspace --locked --features "sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,turso,aws"
 
   driver-live-integration:
     name: Driver Live Integration
@@ -104,6 +104,9 @@ jobs:
 
       - name: Run SQLite live integration tests
         run: cargo test -p dbflux_driver_sqlite --locked --test live_integration
+
+      - name: Run Turso live integration tests
+        run: cargo test -p dbflux_driver_turso --locked --test live_integration
 
       # MSSQL and InfluxDB spin up one container per test (the SQL Server image
       # is ~2 GB), so these suites run single-threaded to avoid exhausting the
@@ -158,4 +161,4 @@ jobs:
           cache-on-failure: true
 
       - name: Cargo check
-        run: cargo check --workspace --locked --features "sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,aws${{ matrix.extra_features }}"
+        run: cargo check --workspace --locked --features "sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,turso,aws${{ matrix.extra_features }}"

@@ -488,6 +488,9 @@ fn create_driver(name: &str) -> Result<Arc<dyn DbDriver>, String> {
         #[cfg(feature = "dynamodb")]
         "dynamodb" => Ok(Arc::new(dbflux_driver_dynamodb::DynamoDriver::new())),
 
+        #[cfg(feature = "turso")]
+        "turso" => Ok(Arc::new(dbflux_driver_turso::TursoDriver::new())),
+
         _ => {
             #[allow(unused_mut)]
             let mut available: Vec<&str> = Vec::new();
@@ -506,6 +509,8 @@ fn create_driver(name: &str) -> Result<Arc<dyn DbDriver>, String> {
             available.push("redis");
             #[cfg(feature = "dynamodb")]
             available.push("dynamodb");
+            #[cfg(feature = "turso")]
+            available.push("turso");
 
             if available.is_empty() {
                 Err("No drivers compiled into this binary. Enable features: sqlite, postgres, mysql, mongodb, redis, dynamodb".to_string())

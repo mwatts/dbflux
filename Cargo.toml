@@ -39,6 +39,7 @@ members = [
     "crates/dbflux_driver_influxdb",
     "crates/dbflux_portability",
     "crates/dbflux_driver_s3",
+    "crates/dbflux_driver_turso",
 ]
 default-members = ["crates/dbflux"]
 resolver = "2"
@@ -83,6 +84,7 @@ dbflux_storage = { path = "crates/dbflux_storage" }
 dbflux_driver_influxdb = { path = "crates/dbflux_driver_influxdb" }
 dbflux_portability = { path = "crates/dbflux_portability" }
 dbflux_driver_s3 = { path = "crates/dbflux_driver_s3" }
+dbflux_driver_turso = { path = "crates/dbflux_driver_turso" }
 dbflux_app = { path = "crates/dbflux_app" }
 dbflux_components = { path = "crates/dbflux_components" }
 dbflux_ui_base = { path = "crates/dbflux_ui_base" }

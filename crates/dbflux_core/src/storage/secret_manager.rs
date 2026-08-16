@@ -314,6 +314,7 @@ impl SecretManager {
             | DbConfig::CloudWatchLogs { .. }
             | DbConfig::InfluxDB { .. }
             | DbConfig::S3 { .. }
+            | DbConfig::Turso { .. }
             | DbConfig::External { .. } => {
                 return None;
             }

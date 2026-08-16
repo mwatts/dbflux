@@ -27,6 +27,7 @@ mysql = ["dbflux_driver_mysql"]
 mongodb = ["dbflux_driver_mongodb"]
 redis = ["dbflux_driver_redis"]
 dynamodb = ["dbflux_driver_dynamodb"]
+turso = ["dbflux_driver_turso"]
 
 [dependencies.dbflux_driver_sqlite]
 path = "../dbflux_driver_sqlite"
@@ -50,4 +51,8 @@ optional = true
 
 [dependencies.dbflux_driver_dynamodb]
 path = "../dbflux_driver_dynamodb"
+optional = true
+
+[dependencies.dbflux_driver_turso]
+path = "../dbflux_driver_turso"
 optional = true

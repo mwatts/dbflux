@@ -588,6 +588,7 @@ fn str_to_db_kind(value: &str) -> Option<dbflux_core::DbKind> {
         "SqlServer" => Some(dbflux_core::DbKind::SqlServer),
         "Redshift" => Some(dbflux_core::DbKind::Redshift),
         "S3" => Some(dbflux_core::DbKind::S3),
+        "Turso" => Some(dbflux_core::DbKind::Turso),
         _ => None,
     }
 }
@@ -606,6 +607,7 @@ fn default_db_config_for_kind(kind: dbflux_core::DbKind) -> dbflux_core::DbConfi
         dbflux_core::DbKind::SqlServer => dbflux_core::DbConfig::default_sqlserver(),
         dbflux_core::DbKind::Redshift => dbflux_core::DbConfig::default_redshift(),
         dbflux_core::DbKind::S3 => dbflux_core::DbConfig::default_s3(),
+        dbflux_core::DbKind::Turso => dbflux_core::DbConfig::default_turso(),
     }
 }
 
@@ -807,6 +809,14 @@ fn build_driver_registry() -> HashMap<String, Arc<dyn DbDriver>> {
         registry.insert(
             "sqlite".to_string(),
             Arc::new(dbflux_driver_sqlite::SqliteDriver),
+        );
+    }
+
+    #[cfg(feature = "turso")]
+    {
+        registry.insert(
+            "turso".to_string(),
+            Arc::new(dbflux_driver_turso::TursoDriver::new()),
         );
     }
 

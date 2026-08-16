@@ -14,16 +14,16 @@ For the branching model, version rules, tag flow, and release procedure, use `do
 
 ```bash
 cargo check --workspace              # Fast type checking
-cargo build -p dbflux --features sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,redshift,s3,aws  # Debug build
-cargo build -p dbflux --features sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,redshift,s3,aws --release  # Release build
-cargo run -p dbflux --features sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,redshift,s3,aws    # Run app
+cargo build -p dbflux --features sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,redshift,s3,turso,aws  # Debug build
+cargo build -p dbflux --features sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,redshift,s3,turso,aws --release  # Release build
+cargo run -p dbflux --features sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,redshift,s3,turso,aws    # Run app
 
 # MCP server (AI integration) - included by default
 cargo build -p dbflux  # MCP included in default features
 ./target/debug/dbflux mcp --client-id test-client
 
 # Build without MCP support (smaller binary, no AI integration)
-cargo build -p dbflux --no-default-features --features sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,redshift,s3,lua,aws
+cargo build -p dbflux --no-default-features --features sqlite,postgres,mysql,mssql,mongodb,redis,dynamodb,cloudwatch,influxdb,redshift,s3,turso,lua,aws
 
 cargo fmt --all                      # Format
 cargo clippy --workspace -- -D warnings  # Lint

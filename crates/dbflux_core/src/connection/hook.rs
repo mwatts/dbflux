@@ -486,6 +486,17 @@ fn profile_config_context(config: &DbConfig) -> (Option<String>, Option<u16>, Op
             ..
         } => (Some(host.clone()), Some(*port), Some(database.clone())),
         DbConfig::SQLite { path, .. } => (None, None, Some(path.to_string_lossy().to_string())),
+        DbConfig::Turso {
+            path, url, mode, ..
+        } => {
+            let database = if mode == "remote" || mode == "sync" {
+                url.clone()
+                    .or_else(|| Some(path.to_string_lossy().to_string()))
+            } else {
+                Some(path.to_string_lossy().to_string())
+            };
+            (url.clone(), None, database)
+        }
         DbConfig::MySQL {
             host,
             port,

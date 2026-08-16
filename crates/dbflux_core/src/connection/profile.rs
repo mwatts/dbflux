@@ -25,6 +25,7 @@ pub enum DbKind {
     SqlServer,
     Redshift,
     S3,
+    Turso,
 }
 
 impl DbKind {
@@ -42,6 +43,7 @@ impl DbKind {
             DbKind::SqlServer => "SQL Server",
             DbKind::Redshift => "Amazon Redshift",
             DbKind::S3 => "Amazon S3",
+            DbKind::Turso => "Turso",
         }
     }
 }
@@ -57,6 +59,10 @@ pub enum InfluxVersion {
     V1,
     #[default]
     V2,
+}
+
+fn default_turso_mode() -> String {
+    "local".to_string()
 }
 
 /// Returns `true` when the given SSL mode id string requires a root CA certificate.
@@ -549,6 +555,33 @@ pub enum DbConfig {
         #[serde(default)]
         ssh_tunnel_profile_id: Option<Uuid>,
     },
+    /// Turso Database (the Rust SQLite-compatible engine).
+    ///
+    /// `mode` is one of `"local"`, `"memory"`, `"remote"`, or `"sync"`.
+    /// Local and memory use `path` (`:memory:` is also accepted as a path).
+    /// Remote and sync use `url` plus the profile's keyring-backed secret
+    /// (auth token). Experimental builder flags stay off unless the user
+    /// opts in; they are not advertised as driver capabilities.
+    Turso {
+        /// Connection mode: `"local"`, `"memory"`, `"remote"`, or `"sync"`.
+        #[serde(default = "default_turso_mode")]
+        mode: String,
+        /// Local file path, replica path (sync), or `:memory:`.
+        path: PathBuf,
+        /// Remote libSQL / Turso Cloud URL (`libsql://…`).
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        url: Option<String>,
+        /// Optional connection ID for in-memory databases (same pooling
+        /// contract as `DbConfig::SQLite`).
+        #[serde(default)]
+        connection_id: Option<String>,
+        #[serde(default)]
+        experimental_custom_types: bool,
+        #[serde(default)]
+        experimental_materialized_views: bool,
+        #[serde(default)]
+        experimental_encryption: bool,
+    },
     /// AWS S3 or an S3-compatible object-storage endpoint (Cloudflare R2, MinIO).
     ///
     /// Auth is either an AWS profile/SSO `AuthProfileRef` (`profile`) or static
@@ -605,6 +638,7 @@ impl DbConfig {
             DbConfig::SqlServer { .. } => DbKind::SqlServer,
             DbConfig::Redshift { .. } => DbKind::Redshift,
             DbConfig::S3 { .. } => DbKind::S3,
+            DbConfig::Turso { .. } => DbKind::Turso,
             DbConfig::External { kind, .. } => *kind,
         }
     }
@@ -759,6 +793,18 @@ impl DbConfig {
         }
     }
 
+    pub fn default_turso() -> Self {
+        DbConfig::Turso {
+            mode: default_turso_mode(),
+            path: PathBuf::new(),
+            url: None,
+            connection_id: None,
+            experimental_custom_types: false,
+            experimental_materialized_views: false,
+            experimental_encryption: false,
+        }
+    }
+
     pub fn ssh_tunnel(&self) -> Option<&SshTunnelConfig> {
         match self {
             DbConfig::Postgres { ssh_tunnel, .. }
@@ -772,6 +818,7 @@ impl DbConfig {
             | DbConfig::CloudWatchLogs { .. }
             | DbConfig::InfluxDB { .. }
             | DbConfig::S3 { .. }
+            | DbConfig::Turso { .. }
             | DbConfig::External { .. } => None,
         }
     }
@@ -808,6 +855,7 @@ impl DbConfig {
             | DbConfig::CloudWatchLogs { .. }
             | DbConfig::InfluxDB { .. }
             | DbConfig::S3 { .. }
+            | DbConfig::Turso { .. }
             | DbConfig::External { .. } => None,
         }
     }
@@ -850,6 +898,7 @@ impl DbConfig {
             | DbConfig::CloudWatchLogs { .. }
             | DbConfig::InfluxDB { .. }
             | DbConfig::S3 { .. }
+            | DbConfig::Turso { .. }
             | DbConfig::External { .. } => false,
         }
     }
@@ -868,6 +917,7 @@ impl DbConfig {
             | DbConfig::CloudWatchLogs { .. }
             | DbConfig::InfluxDB { .. }
             | DbConfig::S3 { .. }
+            | DbConfig::Turso { .. }
             | DbConfig::External { .. } => None,
         }
     }
@@ -920,6 +970,7 @@ impl DbConfig {
             | DbConfig::CloudWatchLogs { .. }
             | DbConfig::InfluxDB { .. }
             | DbConfig::S3 { .. }
+            | DbConfig::Turso { .. }
             | DbConfig::External { .. } => {}
         }
     }
@@ -941,6 +992,7 @@ impl DbConfig {
             | DbConfig::CloudWatchLogs { .. }
             | DbConfig::InfluxDB { .. }
             | DbConfig::S3 { .. }
+            | DbConfig::Turso { .. }
             | DbConfig::External { .. } => {
                 return None;
             }
@@ -972,6 +1024,7 @@ impl DbConfig {
             DbConfig::SqlServer { database, .. } => database.clone(),
             DbConfig::Redshift { database, .. } => Some(database.clone()),
             DbConfig::SQLite { .. } => Some("main".to_string()),
+            DbConfig::Turso { .. } => Some("main".to_string()),
             DbConfig::DynamoDB { .. } | DbConfig::CloudWatchLogs { .. } => None,
             DbConfig::InfluxDB { default_bucket, .. } => default_bucket.clone(),
             DbConfig::S3 { .. } => None,
@@ -1465,6 +1518,7 @@ impl ConnectionProfile {
             DbKind::SqlServer => "mssql",
             DbKind::Redshift => "redshift",
             DbKind::S3 => "s3",
+            DbKind::Turso => "turso",
         }
     }
 

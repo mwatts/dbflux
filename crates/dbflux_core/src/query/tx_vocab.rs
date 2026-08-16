@@ -88,7 +88,7 @@ impl TransactionVocab {
                     "SET SESSION innodb_lock_wait_timeout = DEFAULT",
                 ),
             }),
-            DbKind::SQLite => Some(Self {
+            DbKind::SQLite | DbKind::Turso => Some(Self {
                 begin: "BEGIN IMMEDIATE",
                 commit: "COMMIT",
                 rollback: "ROLLBACK",

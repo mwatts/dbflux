@@ -157,6 +157,21 @@ fn patch_config_field(config: &mut DbConfig, field: &str, value: &ResolvedValue)
             }
         }
 
+        DbConfig::Turso {
+            mode, path, url, ..
+        } => match field {
+            "mode" => *mode = val.to_string(),
+            "path" => *path = val.into(),
+            "url" => {
+                *url = if val.is_empty() {
+                    None
+                } else {
+                    Some(val.to_string())
+                }
+            }
+            _ => {}
+        },
+
         DbConfig::DynamoDB {
             region,
             profile,

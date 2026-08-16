@@ -1,0 +1,35 @@
+[package]
+name = "dbflux_driver_turso"
+version.workspace = true
+edition.workspace = true
+publish = false
+authors.workspace = true
+description.workspace = true
+repository.workspace = true
+homepage.workspace = true
+license.workspace = true
+
+[features]
+default = ["remote"]
+# Remote URL + embedded-replica (sync) modes. Packagers can disable this
+# to avoid the pre-1.0 sync surface.
+remote = ["turso/sync"]
+
+[dependencies]
+dbflux_core = { path = "../dbflux_core" }
+hex.workspace = true
+log = "0.4"
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread"] }
+# Default Turso features are `mimalloc` + `fts`. Keep mimalloc off so a
+# library crate does not install a process-wide allocator. Keep `fts` on:
+# opening a database whose schema already has `CREATE INDEX ... USING fts`
+# fails with "unknown module name: 'fts'" if the module is not compiled in.
+turso = { version = "0.7", default-features = false, features = ["fts"] }
+
+[dev-dependencies]
+dbflux_test_support.workspace = true
+tempfile = "3"
+
+[lints]
+workspace = true

@@ -61,6 +61,9 @@ use dbflux_driver_redshift::RedshiftDriver;
 #[cfg(feature = "s3")]
 use dbflux_driver_s3::S3Driver;
 
+#[cfg(feature = "turso")]
+use dbflux_driver_turso::TursoDriver;
+
 use crate::auth_provider_registry::AuthProviderRegistry;
 use crate::config_loader::{EditableGlobalHook, HookLoadDiagnostic, ProtectedHookRow};
 use crate::rpc_services::external_audit::{ExternalAuditSink, NoOpContextProvider};
@@ -1146,6 +1149,11 @@ impl AppState {
         #[cfg(feature = "s3")]
         {
             drivers.insert("s3".to_string(), Arc::new(S3Driver::new()));
+        }
+
+        #[cfg(feature = "turso")]
+        {
+            drivers.insert("turso".to_string(), Arc::new(TursoDriver::new()));
         }
 
         drivers

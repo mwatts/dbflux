@@ -351,6 +351,26 @@ impl ConnectionDriverConfigDto {
                 dto.s3_access_key_id = access_key_id.clone();
                 dto.s3_path_style = *path_style;
             }
+            DbConfig::Turso {
+                mode,
+                path,
+                url,
+                connection_id,
+                experimental_custom_types,
+                experimental_materialized_views,
+                experimental_encryption,
+            } => {
+                dto.sqlite_path = Some(path.to_string_lossy().to_string());
+                dto.sqlite_connection_id = connection_id.clone();
+                dto.uri = url.clone();
+                let values = serde_json::json!({
+                    "mode": mode,
+                    "experimental_custom_types": experimental_custom_types,
+                    "experimental_materialized_views": experimental_materialized_views,
+                    "experimental_encryption": experimental_encryption,
+                });
+                dto.external_values_json = Some(values.to_string());
+            }
             DbConfig::External { kind, values } => {
                 dto.external_kind = Some(db_kind_to_str(*kind));
                 dto.external_values_json = Some(serde_json::to_string(values).unwrap_or_default());
@@ -560,6 +580,36 @@ impl ConnectionDriverConfigDto {
                 endpoint: self.dynamo_endpoint.clone(),
                 path_style: self.s3_path_style,
             }),
+            DbKind::Turso => {
+                let json: serde_json::Value = self
+                    .external_values_json
+                    .as_deref()
+                    .and_then(|s| serde_json::from_str(s).ok())
+                    .unwrap_or_default();
+
+                Some(DbConfig::Turso {
+                    mode: json
+                        .get("mode")
+                        .and_then(|v| v.as_str())
+                        .unwrap_or("local")
+                        .to_string(),
+                    path: std::path::PathBuf::from(self.sqlite_path.clone().unwrap_or_default()),
+                    url: self.uri.clone().filter(|s| !s.is_empty()),
+                    connection_id: self.sqlite_connection_id.clone(),
+                    experimental_custom_types: json
+                        .get("experimental_custom_types")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false),
+                    experimental_materialized_views: json
+                        .get("experimental_materialized_views")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false),
+                    experimental_encryption: json
+                        .get("experimental_encryption")
+                        .and_then(|v| v.as_bool())
+                        .unwrap_or(false),
+                })
+            }
         }
     }
 }
@@ -582,6 +632,7 @@ fn db_kind_to_str(kind: DbKind) -> String {
         DbKind::SqlServer => "SqlServer",
         DbKind::Redshift => "Redshift",
         DbKind::S3 => "S3",
+        DbKind::Turso => "Turso",
     }
     .to_string()
 }
@@ -600,6 +651,7 @@ fn str_to_db_kind(s: &str) -> Option<DbKind> {
         "SqlServer" => Some(DbKind::SqlServer),
         "Redshift" => Some(DbKind::Redshift),
         "S3" => Some(DbKind::S3),
+        "Turso" => Some(DbKind::Turso),
         _ => None,
     }
 }

@@ -37,6 +37,7 @@ The capability flags listed below are exactly the ones each driver's
 | MySQL | Relational | SQL | Relational base + SSH tunnel, SSL, auth, foreign keys, check/unique constraints, routines, multi-statement | DDL is non-transactional; multi-statement scripts split text-based and run sequentially; routine listing covers FUNCTION/PROCEDURE only. |
 | MariaDB | Relational | SQL | Same crate and capabilities as MySQL | Registered as a separate `mariadb` metadata sharing the MySQL implementation. |
 | SQLite | Relational | SQL | Views, indexes, foreign keys, check/unique constraints, prepared statements, insert/update/delete, pagination, sorting, filtering, CSV/JSON export, query cancellation, transactional DDL, multi-statement | Embedded file driver: no network, SSH tunnel, or TLS; no multi-schema namespace. |
+| Turso | Relational | SQL | Indexes, foreign keys, check/unique constraints, prepared statements, insert/update/delete, pagination, sorting, filtering, CSV/JSON export, transactional DDL, multi-statement | Embedded Turso Database 0.7 (released, not yet 1.0). Local and in-memory; optional remote/sync. Views and query cancellation are not advertised. |
 | SQL Server | Relational | SQL | Relational base + schemas, SSH tunnel, SSL, auth, foreign keys, check/unique constraints, transactional DDL, routines, multi-statement | Built on `tiberius`; named-instance lookup unavailable through SSH tunnel; multi-result-set batches return the last set as primary. |
 | MongoDB | Document | MongoQuery | Document base + aggregation, SSH tunnel, indexes | MongoDB shell-style syntax only (no SQL); no query cancellation; parser scoped to supported command patterns. |
 | Redis | Key-Value | RedisCommands | Key-value base + multiple databases, TTL, key types, value size, rename, bulk get, stream range/add/delete, auth, SSH tunnel, SSL | Redis command syntax only (no SQL); no query cancellation; SSH tunneling unavailable in URI mode. |
@@ -78,6 +79,16 @@ Embedded, file-based driver with schema discovery, query cancellation via
 interrupt handles, transactional DDL, and code generation. No network transport,
 SSH tunneling, or TLS, and no multi-schema namespace. See
 [`crates/dbflux_driver_sqlite/README.md`](../crates/dbflux_driver_sqlite/README.md).
+
+### Turso
+
+Embedded driver for Turso Database (the Rust SQLite-compatible engine), pinned
+to `turso` 0.7. Supports local files, in-memory databases, and optional remote
+URL / embedded-replica modes. Capability flags are conservative: views and
+query cancellation are omitted because those surfaces are experimental or
+unimplemented. Turso 0.7 is a released, out-of-beta engine that is not yet
+1.0. See
+[`crates/dbflux_driver_turso/README.md`](../crates/dbflux_driver_turso/README.md).
 
 ### SQL Server
 
